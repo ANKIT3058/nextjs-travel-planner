@@ -10,7 +10,6 @@ import {
 import Image from "next/image";
 import { Architects_Daughter } from "next/font/google";
 import React, { useState } from "react";
-import { apiClient } from "@/lib";
 import { ADMIN_API_ROUTES } from "@/utils/api-routes";
 import axios from "axios";
 import { useAppStore } from "@/store";
@@ -31,7 +30,7 @@ const Login = () => {
   const handleLogin = async () => {
     console.log("before");
     console.log(ADMIN_API_ROUTES.LOGIN);
-    const response = await apiClient.post(ADMIN_API_ROUTES.LOGIN, {
+    const response = await axios.post(ADMIN_API_ROUTES.LOGIN, {
       email,
       password,
     });
