@@ -1,5 +1,5 @@
 import { Browser } from "puppeteer";
-import { startLocationScraping } from "./scraping";
+import { startLocationScraping, startPackageScraping } from "./scraping";
 
 export const register = async () => {
   if (process.env.NEXT_RUNTIME == "nodejs") {
@@ -17,10 +17,10 @@ export const register = async () => {
             browserWSEndpoint: SBR_WS_ENDPOINT,
           });
           const page = await browser.newPage();
+          console.log("Connected! Navigating to " + job.data.url);
+          await page.goto(job.data.url, {timeout: 60000});
+          console.log("Navigated! Scraping page content...");
           if (job.data.jobType.type === "location") {
-            console.log("Connected! Navigating to " + job.data.url);
-            await page.goto(job.data.url);
-            console.log("Navigated! Scraping page content...");
             const packages = await startLocationScraping(page);
             await prisma.jobs.update({
               where: { id: job.data.id },
@@ -41,6 +41,30 @@ export const register = async () => {
                 });
                 jobsQueue.add("package", { ...job, packageDetails: pkg });
               }
+            }
+          } else if (job.data.jobType.type === "package") {
+            console.log("in package");
+            // Check if already scraped
+            // if not scrape the package
+            // Store the package in trips model
+            // Mark the job as complete
+            const alreadyScraped = await prisma.trips.findUnique({
+              where: { id: job.data.packageDetails.id },
+            });
+            if (!alreadyScraped) {
+              const pkg = await startPackageScraping(
+                page,
+                job.data.packageDetails
+              );
+              console.log(pkg);
+
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              await prisma.trips.create({ data: pkg });
+              await prisma.jobs.update({
+                where: { id: job.data.id },
+                data: { isComplete: true, status: "complete" },
+              });
             }
           }
         } catch (error) {
