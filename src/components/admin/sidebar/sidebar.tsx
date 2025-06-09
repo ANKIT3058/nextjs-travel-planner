@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
   Sidebar as ReactProSidebar,
   Menu,
@@ -13,6 +13,7 @@ import { BiSolidCategory } from "react-icons/bi";
 import { FaBookOpen, FaHome, FaHotel } from "react-icons/fa";
 import { LuLogOut } from "react-icons/lu";
 import { MdOutlineDataUsage } from "react-icons/md";
+import { usePathname } from "next/navigation";
 
 import { Architects_Daughter } from "next/font/google";
 import { useRouter } from "next/navigation";
@@ -25,7 +26,11 @@ const ArchitectsDaughter = Architects_Daughter({
 
 const Sidebar = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [selectedItem, setSelectedItem] = useState("/admin/dashboard")
+  useEffect(() => {
+    setSelectedItem(pathname)
+  }, [pathname]);
 
   const menuItems = [
     { label: "Dashboard", icon: <FaHome />, link: "/admin/dashboard" },

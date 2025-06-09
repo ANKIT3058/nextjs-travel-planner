@@ -4,7 +4,8 @@ import { startLocationScraping, startPackageScraping } from "./scraping";
 export const register = async () => {
   if (process.env.NEXT_RUNTIME == "nodejs") {
     const { Worker } = await import("bullmq");
-    const { connection, jobsQueue } = await import("@/lib");
+    const { connection } = await import("@/lib/redis");
+    const { jobsQueue } = await import("@/lib/queue");
     const puppeteer = await import("puppeteer");
     const SBR_WS_ENDPOINT =
       "wss://brd-customer-hl_4c85eec8-zone-arklyte:mrc5agm28ukz@brd.superproxy.io:9222";
@@ -18,7 +19,7 @@ export const register = async () => {
           });
           const page = await browser.newPage();
           console.log("Connected! Navigating to " + job.data.url);
-          await page.goto(job.data.url, {timeout: 60000});
+          await page.goto(job.data.url, { timeout: 60000 });
           console.log("Navigated! Scraping page content...");
           if (job.data.jobType.type === "location") {
             const packages = await startLocationScraping(page);
