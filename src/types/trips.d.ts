@@ -44,8 +44,8 @@ export interface TripType {
   themes: string[];
   price: number;
   destinationDetails: DestinationDetailsType[];
-  detailedIntineary: DetailedItineraryType[];
+  detailedItinerary: DetailedItineraryType[];
   description: string;
-  packageIteniary: PackageItineraryType[];
+  packageItinerary: PackageItineraryType[];
   scrapedOn: string;
 }
