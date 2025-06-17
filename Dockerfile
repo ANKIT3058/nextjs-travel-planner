@@ -4,28 +4,20 @@ FROM node:18
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy over the prisma schema
-COPY prisma/schema.prisma ./prisma/
-
-# Generate the prisma client based on the schema
-RUN npx prisma generate
-
-# Copy the rest of your app's source code
+# Copy the rest of your app
 COPY . .
-
-RUN npx prisma db push
 
 # Build the production version of the app
 RUN npm run build
 
-# Expose the port your Next.js app will run on
+# Expose the port your app will run on
 EXPOSE 3000
 
-# Start your Next.js app
-CMD ["npm", "start"]
+# Run Prisma generate + db push + start app
+CMD npx prisma generate && npx prisma db push && npm start
