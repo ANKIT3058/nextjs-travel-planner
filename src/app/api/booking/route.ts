@@ -14,9 +14,7 @@ export async function POST(request: Request) {
           where: { id: bookingId },
         });
     }
-    if(bookingDetails) {
-        const paymentIntent = await stripe
-    }
+    
   } catch (error) {
     return NextResponse.json(
       { message: "An unexpected error occurred." },

@@ -1,5 +1,6 @@
 import { Browser } from "puppeteer";
 import { startLocationScraping, startPackageScraping } from "./scraping";
+import prisma from "./lib/prisma";
 
 export const register = async () => {
   if (process.env.NEXT_RUNTIME == "nodejs") {
