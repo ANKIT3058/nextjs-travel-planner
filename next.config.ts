@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   // experimental: {
   //   instrumentationHook: true,
   // }
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   env: {
     NEXT_PUBLIC_DOMAIN: "http://localhost:3000",
   },

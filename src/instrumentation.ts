@@ -3,6 +3,22 @@ import { startLocationScraping, startPackageScraping } from "./scraping";
 
 export const register = async () => {
   if (process.env.NEXT_RUNTIME == "nodejs") {
+    // Check for admins
+
+    const admin = await prisma.admin.count();
+    console.log({ admin });
+    if (!admin) {
+      console.log("in if");
+      const data = await prisma.admin.create({
+        data: {
+          email: "admin@arklyte.com",
+          password:
+            "$2b$10$DcLZAJBMPrECJROnQut8k.XcKjiVnB2v8SMGkIz07W5vjEnUnYoIm",
+        },
+      });
+      console.log({ data });
+    }
+
     const { Worker } = await import("bullmq");
     const { connection } = await import("@/lib/redis");
     const { jobsQueue } = await import("@/lib/queue");
