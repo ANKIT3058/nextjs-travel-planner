@@ -4,7 +4,7 @@ import { USER_API_ROUTES } from "@/utils/api-routes";
 import { Button, Chip } from "@heroui/react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import Image from "next/image";
 
@@ -85,5 +85,12 @@ const Trips = () => {
     </div>
   );
 };
+const TripsPage = () => {
+  return (
+    <Suspense fallback={<div>Loading trips...</div>}>
+      <Trips />
+    </Suspense>
+  );
+};
 
-export default Trips;
+export default TripsPage;
