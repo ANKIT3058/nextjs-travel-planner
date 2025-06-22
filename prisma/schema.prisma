@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres_9dn9_user:iensrCjtGUPE4cB4oRpzGPhJNcDn5P51@dpg-d18lls2li9vc73fmggog-a.oregon-postgres.render.com/postgres_9dn9"
+  url      = "postgresql://postgres:mysecretpassword@localhost:5432/mydb?schema=public"
 }
 
 model Admin {

@@ -3,12 +3,11 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import prisma from "@/lib/prisma";
 
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_SECRET_ID,
-});
-
 export async function POST(request: Request) {
+  const razorpay = new Razorpay({
+    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_SECRET_ID,
+  });
   try {
     const { bookingId, bookingType, userId, taxes, date } =
       await request.json();
