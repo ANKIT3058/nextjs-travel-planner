@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     const user = await prisma.user.create({
       data: { email, firstName, lastName, password: hashedPassword },
     });
+    console.log("User created")
 
     // If password matches, create token and return success
     const token = await createToken(user.email, user.id);

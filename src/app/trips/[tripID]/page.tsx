@@ -18,6 +18,7 @@ import {
 import { IoPerson, IoPricetag } from "react-icons/io5";
 import Itinerary from "./components/itinerary/itinerary";
 import { ImageGallery } from "./components/images";
+import Script from "next/script";
 
 const Trip = ({ params: { tripID } }: { params: { tripID: string } }) => {
   const router = useRouter();
@@ -47,10 +48,80 @@ const Trip = ({ params: { tripID } }: { params: { tripID: string } }) => {
     setDate(newDate);
   };
 
-  const bookTrip = async () => {};
+  const [amount, setAmount] = useState<number>(0);
+
+  const bookTrip = async () => {
+    const isoDate = date.toISOString();
+
+    const res = await axios.post(USER_API_ROUTES.CREATE_BOOKING, {
+      bookingId: tripData?.id,
+      bookingType: "trips",
+      userId: userInfo?.id,
+      taxes: 3300,
+      date: isoDate,
+    });
+
+    if (!res || !res.data?.orderId) {
+      console.error("Failed to create booking or order");
+      return;
+    }
+
+    const options = {
+      key: res.data.keyId, // Use returned keyId
+      amount: res.data.amount, // in paise
+      currency: res.data.currency,
+      name: "Trip Booking",
+      description: "Payment for your trip",
+      order_id: res.data.orderId, // ✅ Correct here
+      handler: async function (response: {
+        razorpay_order_id: any;
+        razorpay_payment_id: any;
+        razorpay_signature: any;
+      }) {
+        // verify payment
+        const verification = await fetch("/api/verifyOrder", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          }),
+        });
+
+        const data = await verification.json();
+        if (data.isOk) {
+          await axios.patch(USER_API_ROUTES.CREATE_BOOKING, {paymentIntent: res.data.orderId});
+          setTimeout(() => {
+            router.push("/my-bookings");
+          }, 3000);
+          alert("Payment successful!");
+          // router.push("/success");
+        } else {
+          alert("Payment verification failed.");
+        }
+      },
+      prefill: {
+        name: userInfo?.firstName,
+        email: userInfo?.email,
+      },
+      theme: {
+        color: "#1DBF73",
+      },
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.open();
+  };
 
   return (
     <div>
+      <Script
+        type="text/javascript"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+      />
       {tripData && (
         <>
           <ImageGallery images={tripData.images} />
