@@ -6,10 +6,13 @@ import Image from "next/image";
 import { useDisclosure } from "@heroui/react";
 import { AuthModal } from "@/components/client/auth-modal";
 import { usePathname } from "next/navigation";
+import { useAppStore } from "@/store";
+import { Loader } from "@/components/client/loader";
 
 const PageLayout = ({ children }: { children: React.ReactNode }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const pathname = usePathname();
+  const {isScraping} = useAppStore();
   return (
     <>
       {pathname.includes("/admin") ? (
@@ -39,6 +42,7 @@ const PageLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <main className="flex flex-col flex-1 relative z-10">
+            {isScraping && <Loader />}
             <Navbar onOpen={onOpen} />
             <section className="flex-1">{children}</section>
             <AuthModal

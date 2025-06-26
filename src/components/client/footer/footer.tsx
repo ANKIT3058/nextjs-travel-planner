@@ -2,8 +2,7 @@
 import React from "react";
 import { Architects_Daughter } from "next/font/google";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-
+import { useRouter, usePathname } from "next/navigation";
 import {
   FaFacebookF,
   FaInstagram,
@@ -17,13 +16,28 @@ const ArchitectsDaughter = Architects_Daughter({
   subsets: ["latin"],
 });
 
+// Background image mapping for different routes
+const routeBackgrounds = {
+  "/": "/home/home-bg.png",
+  "/search-flights": "/flight-search.png", // or whatever image you want for flights
+  "/search-hotels": "/hotel-search.png", // or whatever image you want for hotels
+  // Add more routes as needed
+};
+
 const Footer = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  
+  // Get the appropriate background image for current route
+  const getBackgroundImage = () => {
+    return routeBackgrounds[pathname as keyof typeof routeBackgrounds] || "/home/home-bg.png";
+  };
+
   return (
     <footer
       className="min-h-[20vh] px-16 md:px-48 py-10 relative text-white bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: 'url("/home/home-bg.png")',
+        backgroundImage: `url("${getBackgroundImage()}")`,
       }}
     >
       {/* Gradient overlay */}

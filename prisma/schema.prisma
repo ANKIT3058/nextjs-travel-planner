@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = "postgresql://postgres_9dn9_user:iensrCjtGUPE4cB4oRpzGPhJNcDn5P51@dpg-d18lls2li9vc73fmggog-a.oregon-postgres.render.com/postgres_9dn9"
+  // url      = env("DATABASE_URL")
 }
 
 model Admin {
@@ -61,4 +62,28 @@ model Bookings {
   paymentIntent String   @unique
   isComplete    Boolean  @default(false)
   user          User     @relation(fields: [userId], references: [id])
+}
+
+model Flights {
+  id            Int      @id @default(autoincrement())
+  name          String
+  logo          String
+  from          String
+  to            String
+  departureTime String
+  arrivalTime   String
+  duration      String
+  scrappedOn    DateTime @default(now())
+  price         Int
+  jobId         Int
+}
+
+model Hotels {
+  id         Int      @id @default(autoincrement())
+  name       String
+  image      String
+  price      Int
+  jobId      Int
+  location   String
+  scrapedOn DateTime @default(now())
 }

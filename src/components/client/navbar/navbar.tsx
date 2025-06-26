@@ -25,25 +25,41 @@ const ArchitectsDaughter = Architects_Daughter({
   subsets: ["latin"],
 });
 
+// Background image mapping for different routes
+const routeBackgrounds = {
+  "/": "/home/home-bg.png",
+  "/search-flights": "/flight-search.png", // or whatever image you want for flights
+  "/search-hotels": "/hotel-search.png", // or whatever image you want for hotels
+  // Add more routes as needed
+};
+
 export const Navbar = ({ onOpen }: { onOpen: () => void }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { userInfo } = useAppStore();
-  const routesWithImages = ["/", "/search-flights", "/search-hotels"];
+  
+  // Routes that should show background in navbar
+  const routesWithNavbarBackground = ["/", "/search-flights", "/search-hotels"];
+  
+  // Get the appropriate background image for current route
+  const getBackgroundImage = () => {
+    return routeBackgrounds[pathname as keyof typeof routeBackgrounds] || "/home/home-bg.png";
+  };
+
   return (
     <NextNavbar
       isBordered
       className="min-h-[10vh] bg-transparent text-white relative z-10"
     >
-      {!routesWithImages.includes(pathname) && (
+      {routesWithNavbarBackground.includes(pathname) && (
         <>
           <div className="fixed left-0 top-0 h-[10vh] w-[100vw] overflow-hidden z-0">
             <div className="h-[70vh] w-[100vw] absolute z-10 top-0 left-0">
               <Image
-                src="/home/home-bg.png"
+                src={getBackgroundImage()}
                 layout="fill"
                 objectFit="cover"
-                alt="Search"
+                alt="Background"
               />
             </div>
           </div>
@@ -51,7 +67,7 @@ export const Navbar = ({ onOpen }: { onOpen: () => void }) => {
             className="fixed left-0 top-0 h-[10vh] w-[100vw] overflow-hidden z-0"
             style={{
               backdropFilter: "blur(12px) saturate(280%)",
-              WebkitBackdropFilter: "blur(12px) saturate(280%)", // for Safari support
+              WebkitBackdropFilter: "blur(12px) saturate(280%)",
             }}
           ></div>
         </>
@@ -136,7 +152,6 @@ export const Navbar = ({ onOpen }: { onOpen: () => void }) => {
                       base: "bg-gradient-to-br from-[#ff578f] to-[#945bff]",
                       icon: "text-black/80",
                     }}
-                    // name={userInfo.firstName}
                     size="md"
                   />
                 </DropdownTrigger>

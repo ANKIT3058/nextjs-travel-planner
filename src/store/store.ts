@@ -1,8 +1,14 @@
-import {create} from 'zustand';
-import { AuthSlice, createAuthSlice } from './slices';
+import { create } from "zustand";
+import {
+  AuthSlice,
+  createAuthSlice,
+  createScrapingSlice,
+  ScrapingSlice,
+} from "./slices";
 
-type StoreState = AuthSlice
+type StoreState = AuthSlice & ScrapingSlice;
 
 export const useAppStore = create<StoreState>()((...a) => ({
-    ...createAuthSlice(...a)
-}))
+  ...createAuthSlice(...a),
+  ...createScrapingSlice(...a),
+}));

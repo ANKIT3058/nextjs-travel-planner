@@ -4,6 +4,8 @@ export const ADMIN_API_ROUTES = {
   LOGIN: `${baseRoute}/admin/login`,
   CREATE_JOB: `${baseRoute}/admin/create-job`,
   JOB_DETAILS: `${baseRoute}/admin/job-details`,
+  DASHBOARD_METRICS: `${baseRoute}/admin/dashboard/metrics`,
+  DASHBOARD_SCRAPING_CHART_DATA: `${baseRoute}/admin/dashboard/scraping-chart-data`,
 };
 
 export const USER_API_ROUTES = {
@@ -15,4 +17,10 @@ export const USER_API_ROUTES = {
   ME: `${baseRoute}/auth/me`,
   CREATE_BOOKING: `${baseRoute}/booking`,
   GET_USER_BOOKINGS: `${baseRoute}/booking/get-bookings`,
+  FLIGHT_SCRAPE: `${baseRoute}/flights/scrape`,
+  FLIGHT_SCRAPE_STATUS: `${baseRoute}/flights/scrape-status`,
+  HOTELS_SCRAPE: `${baseRoute}/hotels/scrape`,
+  HOTELS_SCRAPE_STATUS: `${baseRoute}/hotels/scrape-status`,
+  GET_ALL_BOOKINGS: `${baseRoute}/booking`,
+  GET_ALL_HOTELS: `${baseRoute}/all-hotels`,
 };

@@ -1,5 +1,5 @@
 "use client";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -9,31 +9,29 @@ import {
   TableCell,
   Input,
   Button,
-  Chip,
   Pagination,
   Selection,
   SortDescriptor,
-  Link,
 } from "@heroui/react";
 import { FaSearch } from "react-icons/fa";
 import axios from "axios";
 import { USER_API_ROUTES } from "@/utils/api-routes";
-import { TripType } from "@/types/trips";
+import { HotelType } from "@/types/hotel";
 
 const columns = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
-  { name: "CITIES", uid: "destinationItinerary" },
+  { name: "CITY", uid: "location" },
   { name: "PRICE", uid: "price", sortable: true },
   { name: "SCRAPPED ON", uid: "scrapedOn", sortable: true },
 ];
 
-export default function Trips() {
-  const [trips, setTrips] = useState<TripType[]>([]);
+export default function Hotels() {
+  const [hotels, setHotels] = useState<HotelType[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      const response = await axios.get(USER_API_ROUTES.GET_ALL_TRIPS);
-      if (response.data.trips) setTrips(response.data.trips);
+      const response = await axios.get(USER_API_ROUTES.GET_ALL_HOTELS);
+      if (response.data.hotels) setHotels(response.data.hotels);
     };
     fetchData();
   }, []);
@@ -56,16 +54,15 @@ export default function Trips() {
   const headerColumns = columns;
 
   const filteredItems = React.useMemo(() => {
-    let filteredUsers = trips;
+    let filteredUsers = hotels;
 
     if (hasSearchFilter) {
       filteredUsers = filteredUsers.filter((user) =>
-        user.id.toLowerCase().includes(filterValue.toLowerCase())
+        user.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-
     return filteredUsers;
-  }, [trips, hasSearchFilter, filterValue]);
+  }, [hotels, hasSearchFilter, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -77,9 +74,9 @@ export default function Trips() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = React.useMemo(() => {
-    return [...items].sort((a: TripType, b: TripType) => {
-      const first = a[sortDescriptor.column as keyof TripType] as number;
-      const second = b[sortDescriptor.column as keyof TripType] as number;
+    return [...items].sort((a: HotelType, b: HotelType) => {
+      const first = a[sortDescriptor.column as keyof HotelType] as number;
+      const second = b[sortDescriptor.column as keyof HotelType] as number;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
@@ -87,10 +84,16 @@ export default function Trips() {
   }, [sortDescriptor, items]);
 
   const renderCell = React.useCallback(
-    (trip: TripType, columnKey: React.Key) => {
-      const cellValue = trip[columnKey as keyof TripType];
+    (user: HotelType, columnKey: React.Key) => {
+      const cellValue = user[columnKey as keyof HotelType];
+
       function formatDateAndTime(inputDate: string) {
         const date = new Date(inputDate);
+
+        if (isNaN(date.getTime())) {
+          return "Invalid Date";
+        }
+
         const options = {
           weekday: "long",
           month: "long",
@@ -109,55 +112,6 @@ export default function Trips() {
       }
 
       switch (columnKey) {
-        case "id":
-          return (
-            <Link href={`/trip/${cellValue}`} target="_blank">
-              {cellValue as string}
-            </Link>
-          );
-        case "url":
-          return (
-            <Link href={cellValue as string} target="_blank">
-              {cellValue as string}
-            </Link>
-          );
-        case "destinationItinerary": {
-          const colors = [
-            "primary",
-            "secondary",
-            "success",
-            "warning",
-            "danger",
-          ];
-          let currentIndex = 0;
-          if (Array.isArray(cellValue)) {
-            const itineraryValues = cellValue.slice(0, 4) as {
-              place: string;
-            }[];
-            return (
-              <div className="flex gap-2">
-                {itineraryValues.map((value) => (
-                  <Chip
-                    key={value.place}
-                    color={
-                      `${colors[currentIndex++ % colors.length]}` as
-                        | "primary"
-                        | "secondary"
-                        | "success"
-                        | "warning"
-                        | "danger"
-                        | "default"
-                    }
-                  >
-                    {value.place}
-                  </Chip>
-                ))}
-              </div>
-            );
-          }
-          return null; // Or handle the non-array case appropriately
-        }
-
         case "scrapedOn":
           return formatDateAndTime(cellValue as string);
         case "price":
@@ -210,7 +164,7 @@ export default function Trips() {
           <Input
             isClearable
             className="w-full"
-            placeholder="Search by package id..."
+            placeholder="Search by hotel name..."
             startContent={<FaSearch />}
             value={filterValue}
             onClear={() => onClear()}
@@ -219,7 +173,7 @@ export default function Trips() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Total {trips.length} trips
+            Total {hotels.length} hotels
           </span>
           <label className="flex items-center text-default-400 text-small">
             Rows per page:
@@ -235,7 +189,13 @@ export default function Trips() {
         </div>
       </div>
     );
-  }, [filterValue, onSearchChange, trips.length, onRowsPerPageChange, onClear]);
+  }, [
+    filterValue,
+    onSearchChange,
+    hotels.length,
+    onRowsPerPageChange,
+    onClear,
+  ]);
 
   const bottomContent = React.useMemo(() => {
     return (
@@ -285,7 +245,7 @@ export default function Trips() {
 
   return (
     <div className="m-5">
-      {trips.length > 0 && (
+      {hotels.length > 0 && (
         <Table
           aria-label="Example table with custom cells, pagination and sorting"
           isHeaderSticky
@@ -314,12 +274,10 @@ export default function Trips() {
             )}
           </TableHeader>
           <TableBody emptyContent={"No trips found"} items={sortedItems}>
-            {(item: TripType) => (
+            {(item: HotelType) => (
               <TableRow key={item.id}>
                 {(columnKey) => (
-                  <TableCell>
-                    {renderCell(item, columnKey) as ReactNode}
-                  </TableCell>
+                  <TableCell>{renderCell(item, columnKey)}</TableCell>
                 )}
               </TableRow>
             )}
