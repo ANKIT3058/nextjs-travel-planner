@@ -5,12 +5,12 @@ import { USER_API_ROUTES } from "@/utils/api-routes";
 import { Button } from "@heroui/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { Suspense } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import { MdOutlineFlight } from "react-icons/md";
 import Razorpay from "razorpay";
 
-const Flights = () => {
+const Flight = () => {
   const router = useRouter();
   const getRandomNumber = () => Math.floor(Math.random() * 41);
   const searchParams = useSearchParams();
@@ -20,8 +20,8 @@ const Flights = () => {
   const bookFlight = async (flightId: number) => {
     try {
       const isoDate = date
-      ? new Date(date).toISOString()
-      : new Date().toISOString();;
+        ? new Date(date).toISOString()
+        : new Date().toISOString();
 
       const res = await axios.post(USER_API_ROUTES.CREATE_BOOKING, {
         bookingId: flightId, // Assuming flightData contains your flight details
@@ -214,6 +214,14 @@ const Flights = () => {
         })}
       </div>
     </div>
+  );
+};
+
+const Flights = () => {
+  return (
+    <Suspense fallback={<div>Loading Flights...</div>}>
+      <Flight />
+    </Suspense>
   );
 };
 

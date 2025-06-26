@@ -5,10 +5,10 @@ import { USER_API_ROUTES } from "@/utils/api-routes";
 import { Button } from "@heroui/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { Suspense } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 
-const Hotels = () => {
+const Hotel = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const date = searchParams.get("date");
@@ -160,6 +160,14 @@ const Hotels = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const Hotels = () => {
+  return (
+    <Suspense fallback={<div>Loading Flights...</div>}>
+      <Hotel />
+    </Suspense>
   );
 };
 
