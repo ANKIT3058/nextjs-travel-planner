@@ -6,12 +6,10 @@ import { startHotelScraping } from "./scraping/hotels-scraping";
 
 export const register = async () => {
   if (process.env.NEXT_RUNTIME == "nodejs") {
-    // Check for admins
-
     const admin = await prisma.admin.count();
     console.log({ admin });
     if (!admin) {
-      console.log("in if");
+      console.log("Creating admin...");
       const data = await prisma.admin.create({
         data: {
           email: "admin@arklyte.com",
@@ -25,21 +23,43 @@ export const register = async () => {
     const { Worker } = await import("bullmq");
     const { connection } = await import("@/lib/redis");
     const { jobsQueue } = await import("@/lib/queue");
-    const puppeteer = await import("puppeteer");
-    const SBR_WS_ENDPOINT =
-      "wss://brd-customer-hl_4c85eec8-zone-arklyte:mrc5agm28ukz@brd.superproxy.io:9222";
+
     new Worker(
       "jobsQueue",
       async (job) => {
         let browser: undefined | Browser = undefined;
         try {
-          browser = await puppeteer.connect({
+          const SBR_WS_ENDPOINT = process.env.SBR_WS_ENDPOINT;
+          if (!SBR_WS_ENDPOINT) {
+            console.error("Bright Data WebSocket endpoint is not defined!");
+            throw new Error(
+              "SBR_WS_ENDPOINT is missing from environment variables."
+            );
+          }
+          const puppeteerExtra = (await import("puppeteer-extra")).default;
+          const StealthPlugin = (await import("puppeteer-extra-plugin-stealth"))
+            .default;
+
+          puppeteerExtra.use(StealthPlugin());
+
+          console.log("Connecting to Bright Data browser...");
+          browser = await puppeteerExtra.connect({
             browserWSEndpoint: SBR_WS_ENDPOINT,
           });
+
           const page = await browser.newPage();
+          await page.setViewport({ width: 1920, height: 1080 });
+          await page.setUserAgent(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36"
+          );
+
           console.log("Connected! Navigating to " + job.data.url);
-          await page.goto(job.data.url, { timeout: 60000 });
+          await page.goto(job.data.url, {
+            waitUntil: "networkidle2",
+            timeout: 120000,
+          });
           console.log("Navigated! Scraping page content...");
+
           if (job.data.jobType.type === "location") {
             const packages = await startLocationScraping(page);
             await prisma.jobs.update({
@@ -63,11 +83,7 @@ export const register = async () => {
               }
             }
           } else if (job.data.jobType.type === "package") {
-            console.log("in package");
-            // Check if already scraped
-            // if not scrape the package
-            // Store the package in trips model
-            // Mark the job as complete
+            console.log("In package job...");
             const alreadyScraped = await prisma.trips.findUnique({
               where: { id: job.data.packageDetails.id },
             });
@@ -76,8 +92,6 @@ export const register = async () => {
                 page,
                 job.data.packageDetails
               );
-              console.log(pkg);
-
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               await prisma.trips.create({ data: pkg });
@@ -87,18 +101,12 @@ export const register = async () => {
               });
             }
           } else if (job.data.jobType.type === "flight") {
-            await page.screenshot({ path: "debug.png", fullPage: true });
-            const html = await page.content();
-            console.log(html);
-
-            await page.waitForSelector(".flight-seg", { timeout: 60000 }); // Wait for flight container
+            console.log("In flight job...");
             const flights = await startFlightScraping(page);
-            // console.log("flights: ",flights);
             await prisma.jobs.update({
               where: { id: job.data.id },
               data: { isComplete: true, status: "complete" },
             });
-
             for (const flight of flights) {
               await prisma.flights.create({
                 data: {
@@ -115,24 +123,18 @@ export const register = async () => {
               });
             }
           } else if (job.data.jobType.type === "hotels") {
-            console.log("Connected! Navigating to " + job.data.url);
-            await page.goto(job.data.url, { timeout: 120000 });
-            console.log("Navigated! Scraping page content...");
-            const hotels = await startHotelScraping(
-              page,
-              browser,
-              job.data.location
+            console.log("In hotels job...");
+
+            // Screenshot for debugging before scraping
+            await page.screenshot({
+              path: `debug_hotels_${job.data.id}.png`,
+              fullPage: true,
+            });
+            console.log(
+              `Debug screenshot saved as debug_hotels_${job.data.id}.png`
             );
 
-            console.log(`Scraping Complete, ${hotels.length} hotels found.`);
-
-            await prisma.jobs.update({
-              where: { id: job.data.id },
-              data: { isComplete: true, status: "complete" },
-            });
-
-            console.log("Job Marked as complete.");
-            console.log("Starting Loop for Hotels");
+            const hotels = await startHotelScraping(page, job.data.url);
             for (const hotel of hotels) {
               await prisma.hotels.create({
                 data: {
@@ -143,24 +145,26 @@ export const register = async () => {
                   location: job.data.location.toLowerCase(),
                 },
               });
-              console.log(`${hotel.title} inserted in DB.`);
             }
-            console.log("COMPLETE.");
+            await prisma.jobs.update({
+              where: { id: job.data.id },
+              data: { isComplete: true, status: "complete" },
+            });
           }
-        } catch (error) {
-          console.log(error);
+        } catch (err) {
+          console.error(`Failed job ${job.id} for URL: ${job.data.url}`, err);
           await prisma.jobs.update({
             where: { id: job.data.id },
             data: { isComplete: true, status: "failed" },
           });
         } finally {
           await browser?.close();
-          console.log("Browser closed successfully.");
+          console.log("Browser session closed successfully.");
         }
       },
       {
         connection,
-        concurrency: 10,
+        concurrency: 5,
         removeOnComplete: { count: 1000 },
         removeOnFail: { count: 5000 },
       }

@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import Script from "next/script";
 import { useAppStore } from "@/store";
 import { USER_API_ROUTES } from "@/utils/api-routes";
 import { Button } from "@heroui/react";
@@ -12,19 +13,20 @@ const Hotel = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const date = searchParams.get("date");
-  const { userInfo } = useAppStore();
-  const scrapedHotels = [
-    {
-      id: 1,
-      name: "Hotel Viva Palace By Opo",
-      image:
-        "https://content.r9cdn.net/rimg/himg/33/0e/f3/expediav2-3603997-55ea7f-593379.jpg?width=552&height=552&xhint=540&yhint=333&crop=true&watermarkheight=28&watermarkpadding=10",
-      price: 4519,
-      jobId: 200,
-      location: "Delhi",
-      scrapedOn: "2025-06-26T07:35:17.178Z",
-    },
-  ];
+  // const { userInfo } = useAppStore();
+  const { scrapedHotels, userInfo } = useAppStore();
+  // const scrapedHotels = [
+  //   {
+  //     id: 1,
+  //     name: "Hotel Viva Palace By Opo",
+  //     image:
+  //       "https://content.r9cdn.net/rimg/himg/33/0e/f3/expediav2-3603997-55ea7f-593379.jpg?width=552&height=552&xhint=540&yhint=333&crop=true&watermarkheight=28&watermarkpadding=10",
+  //     price: 4519,
+  //     jobId: 200,
+  //     location: "Delhi",
+  //     scrapedOn: "2025-06-26T07:35:17.178Z",
+  //   },
+  // ];
 
   const bookHotel = async (hotelId: number) => {
     try {
@@ -34,14 +36,14 @@ const Hotel = () => {
 
       const res = await axios.post(USER_API_ROUTES.CREATE_BOOKING, {
         bookingId: hotelId, // Assuming flightData contains your flight details
-        bookingType: "flights", // Differentiate as flights
+        bookingType: "hotels", // Differentiate as flights
         userId: userInfo?.id,
         taxes: 30,
         date: isoDate,
       });
 
       if (!res || !res.data?.orderId) {
-        console.error("Failed to create flight booking or order");
+        console.error("Failed to create hotel booking or order");
         return;
       }
 
@@ -49,8 +51,8 @@ const Hotel = () => {
         key: res.data.keyId,
         amount: res.data.amount, // Amount in paise
         currency: res.data.currency,
-        name: "Flight Booking",
-        description: "Payment for your flight",
+        name: "Hotel Booking",
+        description: "Payment for your hotel stay",
         order_id: res.data.orderId,
         handler: async function (response: {
           razorpay_order_id: string;
@@ -100,6 +102,10 @@ const Hotel = () => {
   };
   return (
     <div className="m-10 px-[15vw] min-h-[80vh]">
+      <Script
+        id="razorpay-checkout-js"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+      />
       <Button
         className="my-5"
         variant="shadow"

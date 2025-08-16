@@ -39,6 +39,8 @@ export async function POST(request: Request) {
         break;
     }
 
+    console.log(bookingDetails);
+
     if (!bookingDetails) {
       console.error("No booking details found for:", bookingType, bookingId);
       return NextResponse.json(
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
 
     if (bookingDetails) {
       order = await razorpay.orders.create({
-        amount: 500,
+        amount: bookingDetails.price*100,
         currency: "INR",
         receipt: `receipt_${bookingDetails.id}`,
         payment_capture: true, // <-- this ensures Razorpay auto-captures the payment

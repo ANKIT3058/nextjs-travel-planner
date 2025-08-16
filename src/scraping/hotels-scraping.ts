@@ -1,81 +1,56 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+import { Page } from "puppeteer";
 
-import { Browser, Page } from "puppeteer";
+/**
+ * Scrapes hotel data from a given Yatra search results URL.
+ *
+ * @param {Page} page - The Puppeteer page instance.
+ * @param {string} url - The direct URL to the Yatra hotel search results page.
+ * @returns {Promise<Array<{title: string, price: number, photo: string}>>} A promise that resolves to an array of hotel objects.
+ */
+export const startHotelScraping = async (page: Page, url: string) => {
+    // 1. Navigate to the page and wait for it to be ready
+    console.log(`Navigating to URL: ${url}`);
+    // We use 'networkidle0' to wait until there are no more network connections for at least 500 ms.
+    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+    console.log("Results page loaded.");
 
-export const startHotelScraping = async (
-  page: Page,
-  browser: Browser,
-  location: string
-) => {
-  await page.setViewport({ width: 1920, height: 1080 });
-  console.log("Page Viewport set.");
-  await page.waitForSelector(".NhpT-mod-radius-base");
-  console.log("Wait for selector complete.");
+    // 2. Wait for the hotel cards to be rendered on the page
+    // The selector is specific to the hotel card wrapper class on Yatra.
+    await page.waitForSelector('.HotelListCard_hotelCardWrapper__krJC3', { timeout: 20000 });
+    console.log("Hotel cards are visible.");
+    
+    // A small extra delay can help ensure all lazy-loaded content (like images) is present.
+    await new Promise(res => setTimeout(res, 3000));
 
-  const inputs = await page.$$(".NhpT-mod-radius-base");
-  console.log(`Found ${inputs.length} location inputs`);
+    // 3. Scrape the hotel data from the results page
+    console.log("Evaluating page to extract hotel data...");
+    const hotels = await page.evaluate(() => {
+        const hotelData = [];
+        // This selector targets each hotel listing card.
+        const hotelElements = document.querySelectorAll('.HotelListCard_hotelCardWrapper__krJC3');
 
-  if (inputs.length >= 2) {
-    await inputs[1].type(location);
-  } else if (inputs.length >= 1) {
-    await inputs[0].type(location);
-  } else {
-    throw new Error("No input fields found for location search.");
-  }
+        hotelElements.forEach((el) => {
+            // Selector for the hotel name
+            const title = el.querySelector('h2.HotelListCard_hotelName__rf4k2')?.innerText?.trim();
+            
+            // Selector for the price
+            const priceText = el.querySelector('h2.HotelListCard_totalPrice__uISQ_')?.innerText?.trim();
+            const price = priceText ? parseInt(priceText.replace(/[^\d]/g, ""), 10) : null;
+            
+            // Selector for the photo URL from the img tag.
+            const photo = el.querySelector('img.HotelListCard_hotelImage__Zt6Ca')?.src;
 
-  console.log("Page location typing complete.");
+            // Only add the hotel if we have all the essential information.
+            if (title && price && photo) {
+                hotelData.push({ title, price, photo });
+            }
+        });
 
-//   const liSelector = "ul.EMAt li:first-child";
-//   await page.waitForSelector(liSelector);
-//   console.log("Page li selector complete.");
-//   await page.click(liSelector);
-//   console.log("Page li click complete.");
-  const buttonSelector = "#main-search-form button[type='submit']";
-  await page.waitForSelector(buttonSelector);
-  console.log("Page button selector complete.");
-
-  const [target] = await Promise.all([
-    new Promise((resolve) => browser.once("targetcreated", resolve)),
-    await page.click(buttonSelector),
-  ]);
-
-  const newPage = await target.page();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  console.log("Timeout Complete. [New Page Open]");
-
-  await newPage.bringToFront();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  console.log("Timeout Complete. [Bring to Front]");
-
-  // const client = await page.createCDPSession();
-  // console.log('Waiting captcha to solve...');
-  // const { status } = await client.send('Captcha.waitForSolve', {
-  //     detectTimeout: 10000,
-  // });
-  // console.log('Captcha solve status:', status);
-  //   await newPage.bringToFront();
-  console.log("Starting Page Evalution");
-  await new Promise((resolve) => setTimeout(resolve, 30000));
-
-  return await newPage.evaluate(() => {
-    // Your scraping logic goes here
-    const hotels = [];
-    const selectors = document.querySelectorAll(".yuAt");
-    selectors.forEach((selector) => {
-      const title = selector.querySelector(".IirT-header")?.innerText;
-
-      const price = parseInt(
-        (selector.querySelector(".D8J--price-container span")?.innerText || "")
-          .replace(/[^\d]/g, "")
-          .trim(),
-        10
-      );
-
-      const photo = selector.querySelector(".e9fk-photoWrap img")?.src;
-      if (title && price && photo) hotels.push({ title, price, photo });
+        console.log(`Extracted ${hotelData.length} hotels.`);
+        return hotelData;
     });
 
     return hotels;
-  });
 };

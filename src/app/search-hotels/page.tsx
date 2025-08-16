@@ -19,7 +19,7 @@ const SearchHotels = () => {
   const startScraping = async () => {
     if (selectedCity) {
       const data = await axios.get(
-        `${USER_API_ROUTES.HOTELS_SCRAPE}?location=${selectedCity}`
+        `${USER_API_ROUTES.HOTELS_SCRAPE}?location=${selectedCity}&date=${hotelDate}`
       );
       if (data.data.id) {
         setLoadingJobId(data.data.id);
